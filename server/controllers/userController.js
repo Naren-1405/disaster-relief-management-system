@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const registerUser = async (req, res) => {
     try {
@@ -51,7 +52,49 @@ const registerUser = async (req, res) => {
         });
     }
 }
+
+const loginUser = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const findemail = await User.findOne({ email });
+        if (!findemail) {
+            return res.status(401).json({
+                sucess: false,
+                message: "Invalid email! please enter valid email"
+            });
+        }
+        const ismatch = await bcrypt.compare(password, findemail.password);
+        if (!ismatch) {
+            return res.status(401).json({
+                success: false,
+                message:"Invalid password! please enter valid password"
+            });
+        }
+        const token = jwt.sign({
+            id: findemail._id,
+            role: findemail.role
+        },
+            process.env.JWT_SECRET, {
+            expiresIn: "7d"
+        }
+        );
+        res.status(200).json({
+            success: true,
+            message: "Login successful",
+            token,
+            findemail
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+}
 module.exports = {
-    registerUser
+    registerUser,
+    loginUser
 };
 
