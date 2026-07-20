@@ -56,14 +56,14 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const findemail = await User.findOne({ email });
-        if (!findemail) {
+        const user = await User.findOne({ email });
+        if (!user) {
             return res.status(401).json({
                 sucess: false,
                 message: "Invalid email! please enter valid email"
             });
         }
-        const ismatch = await bcrypt.compare(password, findemail.password);
+        const ismatch = await bcrypt.compare(password, user.password);
         if (!ismatch) {
             return res.status(401).json({
                 success: false,
@@ -71,8 +71,8 @@ const loginUser = async (req, res) => {
             });
         }
         const token = jwt.sign({
-            id: findemail._id,
-            role: findemail.role
+            id: user._id,
+            role: user.role
         },
             process.env.JWT_SECRET, {
             expiresIn: "7d"
@@ -82,7 +82,7 @@ const loginUser = async (req, res) => {
             success: true,
             message: "Login successful",
             token,
-            findemail
+            user
         });
     }
     catch (error) {
